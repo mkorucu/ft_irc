@@ -61,7 +61,8 @@ class Server
 
     private:
         void acceptNewClient();
-        void handleClient(int i);
+        void parseClient(int i);
+        void parseLine(int i);
         int createSocket();
         int setSocketOpt();
         int setNonBlock();

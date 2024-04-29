@@ -37,7 +37,6 @@ int Server::init()
 
 void Server::start()
 {
-
     FD_ZERO(&current_sockets);
     FD_ZERO(&ready_sockets);
     FD_SET(serverSocketFd, &current_sockets);
@@ -58,11 +57,40 @@ void Server::start()
             {
                 if(i == serverSocketFd)
                 {
-                    acceptNewClient();
+                    if((newClientFd = accept(serverSocketFd, (struct sockaddr *)&newClientSocketaddress, &newClientSocketAddressLen)) < 0)
+                    {
+                        std::cerr << "Accept Error.\n";
+                        exit(EXIT_FAILURE);
+                    }
+                    else
+                    {
+                        client_t client = {.socketFd = newClientFd};
+                        myClients.push_back(client);
+                        FD_SET(newClientFd, &current_sockets);
+                        if(newClientFd > max_socket){
+                            max_socket = newClientFd;
+                        }
+                        std::cout << "Client " << newClientFd << " is connected to the server!" << std::endl;
+                    }
                 }
                 else
                 {
-                    handleClient(i);
+                    newClientFd = i;
+                    ssize_t read_val = recv(newClientFd, buff, sizeof(buff), 0);
+                    if (read_val <= 0)
+                    {
+                        if (read_val == 0)
+                            std::cout << "Client left server, socket no: " << i << std::endl;
+                        else
+                            std::cerr << "recv error\n";
+                        // handleQuit();
+                    }
+                    else if (read_val == 1) // '\n'
+                        continue;
+                    else
+                    {
+                        parseClient(i);
+                    }
                 }
             }
         }
@@ -92,27 +120,9 @@ void Server::acceptNewClient()
     std::cout << "Client " << newClientFd << " is connected to the server!" << std::endl;
 }
 
-void Server::handleClient(int i)
+void Server::parseClient(int i)
 {
-    newClientFd = i;
-    ssize_t read_val = recv(newClientFd, buff, sizeof(buff), 0);
-    if (read_val <= 0)
-    {
-        if (read_val == 0)
-            std::cout << "Client left server, socket no: " << i << std::endl;
-        else
-            std::cerr << "recv error\n";
-        // handleQuit();
-    }
-    else if (read_val == 1) // '\n'
-        return;
-    else
-    {
-        buff[read_val - 1] = '\0';
-        std::istringstream iss(buff);
-        std::string command, user, pass, nick;
-    }
-    std::cout << "Client " << newClientFd << ": " << buff << std::endl;
+
 }
 
 int Server::createSocket()
