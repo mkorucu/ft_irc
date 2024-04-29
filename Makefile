@@ -1,11 +1,11 @@
+NAME = ircserv
+
 SRC = main.cpp Server.cpp
 OBJ	= $(SRC:.cpp=.o)
 CXX	= c++
 RM	= rm -rf
 CXXFLAGS	=	-Wall -Werror -Wextra -std=c++98
-NAME = ft_irc
 
-#Colors:
 GREEN		=	\e[92;5;118m
 YELLOW		=	\e[93;5;226m
 GRAY		=	\e[33;2;37m
@@ -16,7 +16,7 @@ CURSIVE		=	\e[33;3m
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	@$(CXX) $(CXXFLAGS) $(SRC) -o $(NAME)
+	@$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 	@printf "$(_SUCCESS) $(GREEN)- Executable ready.\n$(RESET)"
 
 clean:
@@ -29,6 +29,6 @@ fclean: clean
 re: fclean $(NAME)
 
 run: all
-	./$(NAME)
+	./$(NAME) 4242 42
 
 .PHONY: all clean fclean re

@@ -17,6 +17,8 @@
 #include <iostream>
 #include <fcntl.h>
 
+#include "error_messages.h"
+
 #define MAX_CLIENTS 10
 
 typedef enum irc_error_t{
@@ -40,8 +42,8 @@ typedef struct client_t
     std::string username;
     std::string real_name;
     std::string hostname;
-    std::string password;
     bool        is_auth;
+	bool		is_registered;
 }client_t;
 
 typedef struct channel_t
@@ -60,16 +62,18 @@ class Server
         void start();
 
     private:
-        void acceptNewClient();
         void parseClient(int i);
-        void parseLine(int i);
         int createSocket();
         int setSocketOpt();
         int setNonBlock();
         int bindSocket();
         int listenSocket();
         int acceptSocket();
+		bool isAlNumStr(std::string str);
 
+		void sendToClient(std::string str);
+		std::vector<client_t>::iterator findClient(int fd);
+		std::vector<client_t>::iterator findClient(std::string str);
         int port;
         std::string password;
         sockaddr_in serverSocketAddress;

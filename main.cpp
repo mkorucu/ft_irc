@@ -7,8 +7,9 @@ int main(int ac, char **av)
         std::cerr << "INVALID ARGUMENT" << std::endl;
         return -1;
     }
-    Server server = Server(std::string(av[1]), std::string(av[2]));
 
+    Server server = Server(std::string(av[1]), std::string(av[2]));
+	
     if (server.init() == IRC_OK)
         server.start();
 }
