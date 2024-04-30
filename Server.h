@@ -69,7 +69,9 @@ class Server
         int bindSocket();
         int listenSocket();
         int acceptSocket();
+	
 		bool isAlNumStr(std::string str);
+		bool isAlNumSpStr(std::string str);
 
 
 		void sendToClient(std::string str);
