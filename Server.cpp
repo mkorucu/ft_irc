@@ -100,26 +100,23 @@ void Server::start()
                     {
 						buff[read_val - 1] = '\0';
 						std::cout << "\033[32m" << "Client " << newClientFd << ": " << "\033[0m" << buff << std::endl;
-						parseClient(i);
+						parseClient();
                     }
                 }
             }
         }
-        for(size_t i = 0; i < myChannels.size(); i++)
-        {
-            for(size_t j = 0; j < myChannels.at(i).operator_array.size(); j++)
-            {
-                std::cout << myChannels.at(i).name << " operator is: " << myChannels.at(i).operator_array.at(j).nickname << std::endl;
-            }
-        }
+        // for(size_t i = 0; i < myChannels.size(); i++)
+        // {
+        //     for(size_t j = 0; j < myChannels.at(i).operator_array.size(); j++)
+        //     {
+        //         std::cout << myChannels.at(i).name << " operator is: " << myChannels.at(i).operator_array.at(j).nickname << std::endl;
+        //     }
+        // }
     }
 }
 
-void Server::parseClient(int i)
+void Server::parseClient()
 {
-	(void) i;
-
-
     std::istringstream iss(buff);
 	std::string token;
 	std::vector<std::string> tokens;
@@ -128,13 +125,11 @@ void Server::parseClient(int i)
 		if (!token.empty())
     		tokens.push_back(token);
     }
-	std::cout << "TOKEN SIZE " << tokens.size() << std::endl;
 	std::vector<std::string>::iterator it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
 	if ((*it) == "PASS")
 	{
 		std::cout << "Pass is invoked" << std::endl; 
-		// TO DO: bunları pass_check(client_it) içine koy
 		if (tokens.size() == 2)
 		{
 			if (client_it->is_auth == true)
@@ -195,7 +190,6 @@ void Server::parseClient(int i)
 		if (tokens.size() == 5 && (*(it + 4))[0] == ':' && (*(it + 4)).length() >= 2)
 		{
 			*(it + 4) = (*(it + 4)).substr(1, sizeof(*(it + 4)) - 1);
-			std::cout << (*(it + 4)) << std::endl;
 			if (client_it->is_auth == false || client_it->nickname.empty())
 			{
 				sendToClient("Authentication error.");
@@ -227,7 +221,7 @@ void Server::parseClient(int i)
 		std::cout << "QUIT invoked" << std::endl;
 		if (tokens.size() == 1)
 		{
-			close(i);
+			close(newClientFd);
 			myClients.erase(findClient(newClientFd));
 			FD_CLR(newClientFd, &current_sockets);
 			std::cout << "Client " << newClientFd << " left.\n";
@@ -239,7 +233,6 @@ void Server::parseClient(int i)
 	}
 	else if ((*it) == "PRIVMSG")
 	{
-		int fd;
 		prependColumn(tokens);
 		if (tokens.size() == 3 && (*(it + 2))[0] == ':' && (*(it + 2)).length() >= 2)
 		{
@@ -248,21 +241,104 @@ void Server::parseClient(int i)
 			{
 				sendToClient("Authentication error.");
 			}
+			else if ((*(it + 1))[0] == '#')
+			{
+				std::vector<channel_t>::iterator channel_it = findChannel(*(it + 1));
+				if (channel_it == myChannels.end())
+				{
+					sendToClient("Channel not found.");
+				}
+				else if (findClientInChannel(channel_it->operator_array.begin(), channel_it->operator_array.end(), client_it->nickname) == channel_it->operator_array.end())
+				{
+					sendToClient("You are not in channel");
+				}
+				else
+				{
+					std::string sender = client_it->nickname;
+					for(client_it = channel_it->operator_array.begin(); client_it != channel_it->operator_array.end(); client_it++)
+					{
+						sendToClient(client_it->socketFd, sender + channel_it->name + " :" + (*(it + 2)));
+					}
+				}
+			}
 			else if (findClient(*(it + 1)) == myClients.end() || findClient(*(it + 1))->is_registered == false)
 			{
 				sendToClient("User not found.");
 			}
 			else
 			{
-				fd = findClient(*(it + 1))->socketFd;
-				std::string message = client_it->nickname + ": " + (*(it + 2)) + "\n";
-				send(fd, message.c_str(), message.length(), 0);
+				sendToClient(findClient(*(it + 1))->socketFd, client_it->nickname + ": " + (*(it + 2)));
 			}
 		}
 		else
 		{
 			sendToClient("Incorrect format.");
 			sendToClient("PRIVMSG <msgtarget> <text to be sent>");
+		}
+	}
+
+	else if ((*it) == "JOIN")
+	{
+		if (tokens.size() == 2 && (*(it + 1))[0] == '#' && (*(it + 1)).length() >= 2)
+		{
+			std::vector<channel_t>::iterator channel_it = findChannel(*(it + 1));
+			
+			if (client_it->is_registered == false)
+				sendToClient("AuthError.");
+			else if (channel_it != myChannels.end())
+			{
+				std::cout << "client " << newClientFd << ", nick " << client_it->nickname << std::endl;
+				if (findClientInChannel(channel_it->operator_array.begin(), channel_it->operator_array.end(), client_it->nickname) != channel_it->operator_array.end())
+					sendToClient("Already in.");
+				else
+				{
+					channel_it->operator_array.push_back(*client_it);
+
+					sendToClient("Joined the channel..");
+				}
+			}
+			else 
+			{
+				sendToClient("Joined the channel as Operator..");
+				channel_t chan;
+				chan.name = *(it + 1);
+				chan.operator_array.push_back(*client_it);
+				myChannels.push_back(chan);
+				std::cout << "Channel " << chan.name << " created.\n";
+			}
+		}
+		else
+		{
+			sendToClient("Invalid JOIN usage..");
+		}
+	}
+	else if ((*it) == "KICK")
+	{
+		if (tokens.size() == 3 && (*(it + 1))[0] == '#' && (*(it + 1)).length() >= 2)
+		{
+			std::vector<channel_t>::iterator channel_it = findChannel(*(it + 1));
+			
+			if (client_it->is_registered == false)
+				sendToClient("AuthError.");
+			else if (channel_it != myChannels.end())
+			{
+				if (findClientInChannel(channel_it->operator_array.begin(), channel_it->operator_array.end(), client_it->nickname) != channel_it->operator_array.begin())
+					sendToClient("You are not an operator!");
+				else if (findClientInChannel(channel_it->operator_array.begin(), channel_it->operator_array.end(), (*(it + 2))) == channel_it->operator_array.end())
+					sendToClient("User not in channel.");
+				else
+				{
+					(*channel_it).operator_array.erase(findClientInChannel(channel_it->operator_array.begin(), channel_it->operator_array.end(), (*(it + 2))));
+				}
+			}
+			else
+			{
+				sendToClient("Channel not found!");
+			}
+		}
+		else
+		{
+			sendToClient("Invalid KICK usage..");
 		}
 	}
 }
@@ -349,6 +425,30 @@ std::vector<client_t>::iterator Server::findClient(std::string str)
 	return myClients.end();
 }
 
+std::vector<client_t>::iterator Server::findClientInChannel(std::vector<client_t>::iterator it, std::vector<client_t>::iterator end, std::string str)
+{
+	while (it != end)
+	{
+		std::cout << "IN CLIENT ITERATOR CURRENT NAME: " << it->nickname << std::endl;
+
+		if ((*it).nickname == str)
+			return it;
+		it++;
+	}
+	std::cout << "CANNOT FIND USER IN CHANNEL ARRAY\n";
+	return it;
+}
+
+std::vector<channel_t>::iterator Server::findChannel(std::string name)
+{
+	for(std::vector<channel_t>::iterator it = myChannels.begin(); it != myChannels.end(); it++)
+	{
+		if ((*it).name == name)
+			return it;
+	}
+	return myChannels.end();
+}
+
 std::vector<client_t>::iterator Server::findClient(int fd)
 {
 	for(std::vector<client_t>::iterator it = myClients.begin(); it != myClients.end(); it++)
@@ -362,6 +462,11 @@ std::vector<client_t>::iterator Server::findClient(int fd)
 void Server::sendToClient(std::string str)
 {
 	send(newClientFd, (str + "\n").c_str(), str.size() + 1, 0);
+}
+
+void Server::sendToClient(int fd, std::string str)
+{
+	send(fd, (str + "\n").c_str(), str.size() + 1, 0);
 }
 
 std::string err_to_name(int err)

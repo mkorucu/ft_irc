@@ -62,7 +62,7 @@ class Server
         void start();
 
     private:
-        void parseClient(int i);
+        void parseClient();
         int createSocket();
         int setSocketOpt();
         int setNonBlock();
@@ -75,8 +75,11 @@ class Server
 
 
 		void sendToClient(std::string str);
+		void sendToClient(int fd, std::string str);
 		std::vector<client_t>::iterator findClient(int fd);
 		std::vector<client_t>::iterator findClient(std::string str);
+		std::vector<client_t>::iterator findClientInChannel(std::vector<client_t>::iterator it, std::vector<client_t>::iterator end, std::string str);
+		std::vector<channel_t>::iterator findChannel(std::string name);
 		void prependColumn(std::vector<std::string> &tokens);
         int port;
         std::string password;
