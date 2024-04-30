@@ -129,28 +129,28 @@ void Server::parseClient(int i)
 		if (!token.empty())
     		tokens.push_back(token);
     }
+	std::cout << "TOKEN SIZE " << tokens.size() << std::endl;
 	std::vector<std::string>::iterator it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
 	if ((*it) == "PASS")
 	{
 		std::cout << "Pass is envoked" << std::endl; 
 		// TO DO: bunları pass_check(client_it) içine koy
-		if ((it + 1) != tokens.end() && tokens.size() == 2)
+		if (tokens.size() == 2)
 		{
 			if (client_it->is_auth == true)
 			{
-				sendToClient(ERR_ALREADYREGISTERED(nickname));
+				sendToClient("Already authorized.");
 			}
 			else if (*(it + 1) != this->password)
 			{
-				sendToClient("Password incorrect.");
+				sendToClient(PASS_ERR(client_it->nickname));
 			}
 			else
 			{
 				sendToClient("Password correct.");
 				client_it->is_auth = true;
 			}
-
 		}
 		else
 		{
@@ -160,9 +160,9 @@ void Server::parseClient(int i)
 	}
 	else if ((*it) == "NICK")
 	{
-		std::cout << "NICK is envoked" << std::endl;
+		std::cout << "NICK is invoked" << std::endl;
 		
-		if ((it + 1) != tokens.end() && tokens.size() == 2)
+		if (tokens.size() == 2)
 		{
 			if (client_it->is_auth == false)
 			{
@@ -174,7 +174,7 @@ void Server::parseClient(int i)
 			}
 			else if (findClient(*(it + 1)) != myClients.end())
 			{
-				sendToClient("Nickname is already registered.");
+				sendToClient(ERR_ALREADYREGISTERED(*(it + 1)));
 			}
 			else
 			{
@@ -186,6 +186,60 @@ void Server::parseClient(int i)
 		else
 		{
 			sendToClient("Wrong formatting. use NICK <nickname>");
+		}
+	}
+	else if ((*it) == "USER")
+	{
+		std::cout << "USER is invoked" << std::endl;
+
+		prependColumn(tokens);
+		std::cout << tokens.size() << std::endl;
+		if (tokens.size() == 5)
+		{
+			if (client_it->is_auth == false || client_it->nickname.empty())
+			{
+				sendToClient("Authentication error.");
+			}
+			while (it != tokens.end())
+			{
+				std::cout << *it << "\t" << std::endl;
+				it++;
+			}
+			
+			//else if (!isAlNumStr(*(it + 1)))
+			//{
+			//	sendToClient("Nicknames may only include alphanumerical characters.");
+			//}
+			//else if (findClient(*(it + 1)) != myClients.end())
+			//{
+			//	sendToClient("Nickname is already registered.");
+			//}
+			//else
+			//{
+			//	client_it->nickname = (*(it + 1));
+			//	sendToClient("Your nick has been set.");
+			//	std::cout << client_it->nickname << std::endl;
+			//}
+		}
+		else
+		{
+			sendToClient("Incorrect format.");
+			sendToClient("use USER <username> <mode> <unused> <realname>");
+		}
+	}
+	else if ((*it) == "QUIT")
+	{
+		std::cout << "QUIT invoked" << std::endl;
+		if (tokens.size() == 1)
+		{
+			close(i);
+			myClients.erase(findClient(newClientFd));
+			FD_CLR(newClientFd, &current_sockets);
+			std::cout << "Client " << newClientFd << " left.\n";
+		}
+		else
+		{
+			sendToClient("Wrong formatting. use QUIT");
 		}
 	}
 	
@@ -311,3 +365,24 @@ bool Server::isAlNumStr(std::string str)
 	}
 	return true;
 }
+
+void Server::prependColumn(std::vector<std::string> &tokens)
+{
+	std::cout << tokens.size() << std::endl;
+	std::vector<std::string>::iterator it1 = tokens.begin();
+	while (it1 != tokens.end())
+	{
+		if ((*it1)[0] == ':')
+			break;
+		it1++;
+	}
+	while (it1 + 1 != tokens.end())
+	{
+		(*it1).append(" ");
+		(*it1).append(*(it1 + 1));
+		tokens.erase(it1 + 1);
+	}
+	std::cout << tokens.size() << std::endl;
+	std::cout << "***" << *it1 << std::endl;
+}
+

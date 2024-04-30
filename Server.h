@@ -71,9 +71,11 @@ class Server
         int acceptSocket();
 		bool isAlNumStr(std::string str);
 
+
 		void sendToClient(std::string str);
 		std::vector<client_t>::iterator findClient(int fd);
 		std::vector<client_t>::iterator findClient(std::string str);
+		void prependColumn(std::vector<std::string> &tokens);
         int port;
         std::string password;
         sockaddr_in serverSocketAddress;
