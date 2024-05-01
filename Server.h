@@ -79,7 +79,9 @@ class Server
 		std::vector<client_t>::iterator findClient(int fd);
 		std::vector<client_t>::iterator findClient(std::string str);
 		std::vector<client_t>::iterator findClientInChannel(std::vector<client_t>::iterator it, std::vector<client_t>::iterator end, std::string str);
-		std::vector<channel_t>::iterator findChannel(std::string name);
+		std::vector<client_t>::iterator findClientInChannel(std::vector<channel_t>::iterator channel, std::string str);
+        std::vector<channel_t>::iterator findChannel(std::string name);
+        void deleteClientOnEverywhere(int client_fd);
 		void prependColumn(std::vector<std::string> &tokens);
         int port;
         std::string password;
