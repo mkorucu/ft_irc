@@ -48,7 +48,6 @@ typedef struct client_t
 typedef struct channel_t
 {
     std::string name;
-    std::string password;
     std::string topic;
     std::vector<client_t> operator_array;
 }channel_t;
@@ -68,6 +67,15 @@ class Server
         int bindSocket();
         int listenSocket();
         int acceptSocket();
+
+		void	pass(std::vector<std::string> tokens);
+		void	nick(std::vector<std::string> tokens);
+		void	user(std::vector<std::string> tokens);
+		void	privmsg(std::vector<std::string> tokens);
+		void	join(std::vector<std::string> tokens);
+		void	kick(std::vector<std::string> tokens);
+		void	quit(std::vector<std::string> tokens);
+		void	cap(std::vector<std::string> tokens);
 	
 		bool isAlNumStr(std::string str);
 		bool isAlNumSpStr(std::string str);
@@ -76,6 +84,7 @@ class Server
 
 		void sendToClient(std::string str);
 		void sendToClient(int fd, std::string str);
+		void sendReply(std::string str);
 		std::vector<client_t>::iterator findClient(int fd);
 		std::vector<client_t>::iterator findClient(std::string str);
 		std::vector<client_t>::iterator findClientInChannel(std::vector<channel_t>::iterator channel, std::string str);
