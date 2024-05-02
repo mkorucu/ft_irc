@@ -361,6 +361,8 @@ void Server::parseClient()
 		noticeCommand(tokens);
 	else if (*token_it == "PART")
 		partCommand(tokens);
+	else if (*token_it == "NOTICE")
+		noticeCommand(tokens);
 	else
 	{
 		sendToClient("Command unknown.");
