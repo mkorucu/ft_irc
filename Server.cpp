@@ -282,7 +282,10 @@ void Server::parseClient()
 			sendToClient("PRIVMSG <msgtarget> <text to be sent>");
 		}
 	}
-
+	else if ((*token_it) == "TOPIC")
+	{
+		topicCommand(tokens);
+	}
 	else if ((*token_it) == "JOIN")
 	{
 		if (tokens.size() == 2 && (*(token_it + 1))[0] == '#' && (*(token_it + 1)).length() >= 2)
@@ -354,6 +357,10 @@ void Server::parseClient()
 			sendToClient("Invalid KICK usage..");
 		}
 	}
+	else if (*(token_it) == "NOTICE")
+		noticeCommand(tokens);
+	else if (*token_it == "PART")
+		partCommand(tokens);
 	else
 	{
 		sendToClient("Command unknown.");
@@ -498,6 +505,14 @@ void Server::sendToClient(std::string str)
 void Server::sendToClient(int fd, std::string str)
 {
 	send(fd, (str + "\n").c_str(), str.size() + 1, 0);
+}
+
+void Server::sendToClientsInChannel(std::vector<channel_t>::iterator channel_it, std::string str)
+{
+	for(std::vector<client_t>::iterator clients_it = channel_it->operator_array.begin(); clients_it != channel_it->operator_array.end(); clients_it++)
+	{
+		send(clients_it->socketFd, (str + "\n").c_str(), str.size() + 1, 0);
+	}
 }
 
 std::string err_to_name(int err)

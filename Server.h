@@ -69,13 +69,17 @@ class Server
         int bindSocket();
         int listenSocket();
         int acceptSocket();
-	
+
+        void noticeCommand(std::vector<std::string> token);
+        void topicCommand(std::vector<std::string> tokens);
+        void partCommand(std::vector<std::string> tokens);
 		bool isAlNumStr(std::string str);
 		bool isAlNumSpStr(std::string str);
 
 
 		void sendToClient(std::string str);
 		void sendToClient(int fd, std::string str);
+        void sendToClientsInChannel(std::vector<channel_t>::iterator channel_it, std::string str);
 		std::vector<client_t>::iterator findClient(int fd);
 		std::vector<client_t>::iterator findClient(std::string str);
 		std::vector<client_t>::iterator findClientInChannel(std::vector<client_t>::iterator it, std::vector<client_t>::iterator end, std::string str);
