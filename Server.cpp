@@ -42,6 +42,12 @@ void Server::start()
     FD_SET(serverSocketFd, &current_sockets);
     max_socket = serverSocketFd;
 
+	char hostname_c[1024];
+	gethostname(hostname_c, 1024);
+	this->hostname = hostname_c;
+
+	this->c_date = getTime();
+
     while(1)
     {
         ready_sockets = current_sockets;
@@ -118,10 +124,26 @@ void Server::parseClient()
 	while (std::getline(iss, token, ' '))
 	{
 		if (!token.empty())
-    		tokens.push_back(token);
+		{
+			size_t i = token.find(13);
+			if (i != std::string::npos)
+			{
+				tokens.push_back(token.substr(0, i));
+				if (i + 1 != token.length())
+					tokens.push_back(token.substr(i + 2, token.length()));
+			}
+			else
+    			tokens.push_back(token);
+		}
     }
 	std::vector<std::string>::iterator token_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
+	while (token_it != tokens.end())
+	{
+		std::cout << "<<<" << *token_it << "*" << std::endl;
+		token_it++;
+	}
+	token_it = tokens.begin();
 	if ((*token_it) == "PASS")
 	{
 		std::cout << "Pass is invoked" << std::endl; 
@@ -212,7 +234,7 @@ void Server::parseClient()
 				client_it->real_name = (*(token_it + 4));
 				client_it->is_registered = true;
 
-				sendToClient("Welcome to Internet Relay Chat!");
+				sendToClient(RPL_WELCOME(std::to_string(newClientFd), client_it->nickname, client_it->username, this->hostname));
 			}
 		}
 		else
@@ -354,10 +376,114 @@ void Server::parseClient()
 			sendToClient("Invalid KICK usage..");
 		}
 	}
+	else if ((*token_it) == "CAP" && tokens.size() >= 2 && (*(token_it + 1)) == "LS")
+	{
+		std::cout << "not" << std::endl;
+		sendToClient("CAP * LS :multi-prefix sasl");
+		sendToClient("PONG");
+	}
+	else if ((*token_it) == "PING")
+	{
+		sendToClient("PONG");
+	}
+	else if ((*token_it) == "CAP" && tokens.size() >= 2 && (*(token_it + 1)) == "REQ")
+	{
+		sendToClient("CAP * ACK multi-prefix");
+	}
+	else if ((*token_it) == "CAP" && tokens.size() >= 2 && (*(token_it + 1)) == "END")
+	{
+		token_it += 2;
+		if ((*token_it) == "PASS")
+		{
+			std::cout << "Pass is invoked" << std::endl; 
+			if (tokens.size() >= 4)
+			{
+				if (client_it->is_auth == true)
+				{
+					sendToClient("Already authorized.");
+				}
+				else if (*(token_it + 1) != (":" + this->password))
+				{
+					sendToClient(PASS_ERR(client_it->nickname));
+				}
+				else
+				{
+					sendToClient("Password correct.");
+					client_it->is_auth = true;
+				}
+			}
+			else
+			{
+				sendToClient("Wrong formatting. use PASS <password> ");
+			}
+		}
+		token_it += 2;
+		if ((*token_it) == "NICK")
+		{
+			if (tokens.size() >= 6)
+			{
+				if (!isAlNumStr(*(token_it + 1)))
+				{
+					sendToClient("Nicknames may only include alphanumerical characters.");
+				}
+				else if (findClient(*(token_it + 1)) != myClients.end())
+				{
+					sendToClient(ERR_ALREADYREGISTERED(*(token_it + 1)));
+				}
+				else
+				{
+					client_it->nickname = (*(token_it + 1));
+					for(std::vector<channel_t>::iterator it = myChannels.begin(); it != myChannels.end(); it++)
+					{
+						client_it = findClientInChannel(it, client_it->nickname);
+						if (client_it != it->operator_array.end())
+						{
+							std::cout << "client nickname updated on channel " << it->name << std::endl;
+							client_it->nickname = (*(token_it + 1));
+						}
+					}
+					sendToClient("Your nick has been set.");
+					std::cout << client_it->nickname << std::endl;
+				}
+			}
+		}
+			token_it +=2;
+			prependColumn(tokens);
+			if (tokens.size() >= 5 && (*(token_it + 4))[0] == ':' && (*(token_it + 4)).length() >= 2)
+			{
+				*(token_it + 4) = (*(token_it + 4)).substr(1, sizeof(*(token_it + 4)) - 1);
+				if (client_it->is_auth == false || client_it->nickname.empty())
+				{
+					sendToClient("Authentication error.");
+				}
+				else if (isAlNumStr(*(token_it + 1)) == false || isAlNumSpStr(*(token_it + 4)) == false)
+				{
+					sendToClient("Usernames and realnames may only include alphanumerical characters.");
+				}
+				else if (client_it->username.empty() == false || client_it->real_name.empty() == false)
+				{
+					sendToClient("You are already registered!");
+				}
+				else
+				{
+					client_it->username = (*(token_it + 1));
+					client_it->real_name = (*(token_it + 4));
+					client_it->is_registered = true;
+
+					sendToClient(RPL_WELCOME(std::to_string(newClientFd), client_it->nickname, client_it->username, this->hostname));
+				}
+			}
+			else
+			{
+				sendToClient("Incorrect format.");
+				sendToClient("use USER <username> <mode> <unused> <realname>");
+			}
+	}
 	else
 	{
 		sendToClient("Command unknown.");
 	}
+	std::cout << "input:" << (*token_it) << tokens.size()  << (*(token_it + 1)) <<std::endl;
 }
 
 int Server::createSocket()
@@ -493,6 +619,7 @@ std::vector<client_t>::iterator Server::findClient(int fd)
 void Server::sendToClient(std::string str)
 {
 	send(newClientFd, (str + "\n").c_str(), str.size() + 1, 0);
+	std::cout << ">>>" << str << std::endl;
 }
 
 void Server::sendToClient(int fd, std::string str)
@@ -551,4 +678,15 @@ void Server::prependColumn(std::vector<std::string> &tokens)
 		(*it1).append(*(it1 + 1));
 		tokens.erase(it1 + 1);
 	}
+}
+
+std::string Server::getTime()
+{
+	time_t rawtime;
+	struct tm *timeinfo;
+	char buffer[80];
+	std::time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(buffer, 80, "%d-%m-%Y %I:%M:%S", timeinfo);
+	return std::string(buffer);
 }

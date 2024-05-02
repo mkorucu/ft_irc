@@ -2,6 +2,11 @@
 #define __ERROR_MESSAGES_H
 
 
+#define RPL_WELCOME(fd, nick, user, host) (fd + ":" + host + " 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host)
+#define RPL_YOURHOST(nick, host) ("002", ":Your host is " + host + ", running version " + VERSION)
+#define RPL_CREATED(nick, date) ("003", ":This server was created " + date)
+
+
 #define WRONG_FORMATTIN() ("")
 
 #define LOGIN(nickname, username) (": 001 " + nickname + " :Welcome to the IRC Network " + nickname + "!" + username + "\r\n")

@@ -41,7 +41,6 @@ typedef struct client_t
     std::string nickname;
     std::string username;
     std::string real_name;
-    std::string hostname;
     bool        is_auth;
 	bool		is_registered;
 }client_t;
@@ -73,12 +72,12 @@ class Server
 		bool isAlNumStr(std::string str);
 		bool isAlNumSpStr(std::string str);
 
+		std::string getTime();
 
 		void sendToClient(std::string str);
 		void sendToClient(int fd, std::string str);
 		std::vector<client_t>::iterator findClient(int fd);
 		std::vector<client_t>::iterator findClient(std::string str);
-		std::vector<client_t>::iterator findClientInChannel(std::vector<client_t>::iterator it, std::vector<client_t>::iterator end, std::string str);
 		std::vector<client_t>::iterator findClientInChannel(std::vector<channel_t>::iterator channel, std::string str);
         std::vector<channel_t>::iterator findChannel(std::string name);
         void deleteClientOnEverywhere(int client_fd);
@@ -99,6 +98,8 @@ class Server
         char buff[1024];
         std::vector<client_t> myClients;
         std::vector<channel_t> myChannels;
+		std::string hostname;
+		std::string c_date;
 };
 
 
