@@ -14,6 +14,7 @@
 #define RPL_USRS(nick, channel, users) (" 353 " + nick + " = " + channel + " :@" + users)
 #define RPL_EONL(nick, channel) (" 366 " + nick + " " + channel + " :End of /NAMES list")
 #define RPL_NICK(nick, user, new_nick) (":" + nick + "!" + user + "@* NICK " + new_nick)
+#define KICK(nick, user, channel, kicked) (":" + nick + "!" + "@* KICK " + channel + " " + kicked)
 
 
 

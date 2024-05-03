@@ -215,8 +215,9 @@ void	Server::kick(std::vector<std::string> &tokens)
 			{
 				std::__1::vector<client_t>::iterator client_to_kick = findClientInChannel(channel_it, (*(tokens_it + 2)));
 
+				sendToClient(KICK(client_it->nickname, client_it->username, channel_it->name, client_to_kick->nickname));
+				sendToClientsInChannel(channel_it, KICK(client_it->nickname, client_it->username, channel_it->name, client_to_kick->nickname));
 				channel_it->operator_array.erase(client_to_kick);
-				// kicked sendToClient(client_to_kick->socketFd, "You are kicked by " + client_it->nickname);
 			}
 		}
 		else
