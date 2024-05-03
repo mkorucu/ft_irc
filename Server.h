@@ -41,6 +41,7 @@ typedef struct client_t
     std::string nickname;
     std::string username;
     std::string real_name;
+    std::string input_buff;
     bool        is_auth;
 	bool		is_registered;
 }client_t;

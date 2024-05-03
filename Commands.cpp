@@ -44,7 +44,6 @@ void	Server::nick(std::vector<std::string> &tokens)
 				client_it = findClientInChannel(it, client_it->nickname);
 				if (client_it != it->operator_array.end())
 				{
-					std::cout << "client nickname updated on channel " << it->name << std::endl;
 					client_it->nickname = (*(tokens_it + 1));
 				}
 			}

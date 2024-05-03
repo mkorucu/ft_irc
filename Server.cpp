@@ -42,8 +42,8 @@ void Server::start()
     FD_SET(serverSocketFd, &current_sockets);
     max_socket = serverSocketFd;
 
-	char hostname_c[1024];
-	gethostname(hostname_c, 1024);
+	char hostname_c[64];
+	gethostname(hostname_c, 64);
 	this->hostname = hostname_c;
 
 	this->c_date = getTime();
@@ -84,6 +84,7 @@ void Server::start()
                 else
                 {
                     newClientFd = i;
+					std::vector<client_t>::iterator client_it = findClient(newClientFd);
                     ssize_t read_val = recv(newClientFd, buff, sizeof(buff), 0);
                     if (read_val <= 0)
                     {
@@ -98,19 +99,24 @@ void Server::start()
 						}
 						close(newClientFd);
 						FD_CLR(newClientFd, &current_sockets);
-						// std::vector<client_t>::iterator index = findClient(newClientFd);
-						// if (index != myClients.end())
-						// 	myClients.erase(index);
 						deleteClientOnEverywhere(newClientFd);
                     }
-                    else if (read_val == 1) // '\n'
+					else if (buff[read_val - 1] != '\n')
+						client_it->input_buff.append(buff);
+                    else if (read_val == 1 && *buff == '\n' && client_it->input_buff.size() == 0) // '\n'
                         continue;
                     else
                     {
 						buff[read_val - 1] = '\0';
-						std::cout << "\033[32m" << "Client " << newClientFd << ": " << "\033[0m" << buff << std::endl;
+						client_it->input_buff.append(buff);
+						std::cout << "----------------------------\n";
+						std::cout << "\033[32m" << "Client " << newClientFd << ": " << "\033[0m" << client_it->input_buff << std::endl;
 						parseClient();
+						client_it->input_buff.clear();
+						client_it->input_buff.shrink_to_fit();
+						std::cout << "----------------------------\n";
                     }
+					memset(buff, 0, sizeof(buff));
                 }
             }
         }
@@ -119,7 +125,8 @@ void Server::start()
 
 void Server::parseClient()
 {
-    std::istringstream iss(buff);
+	std::vector<client_t>::iterator client_it = findClient(newClientFd);
+    std::istringstream iss(client_it->input_buff);
 	std::string line;
 	std::vector<std::string> lines;
 
@@ -133,12 +140,10 @@ void Server::parseClient()
 		else
     		lines.push_back(line);
     }
-	
 	std::vector<std::string>::iterator lines_it = lines.begin();
 
 	while (lines_it != lines.end())
 	{
-		std::cout << "tokens size before while: " << lines_it->size() << std::endl;
 		std::string token;
 		std::vector<std::string> tokens;
 		std::istringstream isslines(*lines_it);
@@ -151,7 +156,6 @@ void Server::parseClient()
     	}
 	
 		std::vector<std::string>::iterator tokens_it = tokens.begin();
-		std::cout << "tokens size in while: " << tokens.size() << std::endl;
 		if (*tokens_it == "PASS")
 			pass(tokens);
 		else if (*tokens_it == "JOIN")
