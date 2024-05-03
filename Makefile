@@ -1,6 +1,6 @@
 NAME = ircserv
 
-SRC = main.cpp Server.cpp Notice.cpp Topic.cpp Part.cpp
+SRC = main.cpp Server.cpp Notice.cpp Topic.cpp Part.cpp Who.cpp
 OBJ	= $(SRC:.cpp=.o)
 CXX	= c++
 RM	= rm -rf

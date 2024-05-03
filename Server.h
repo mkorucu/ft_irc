@@ -70,9 +70,10 @@ class Server
         int listenSocket();
         int acceptSocket();
 
-        void noticeCommand(std::vector<std::string> token);
+        void noticeCommand(std::vector<std::string> tokens);
         void topicCommand(std::vector<std::string> tokens);
         void partCommand(std::vector<std::string> tokens);
+        void whoCommand(std::vector<std::string> tokens);
 		bool isAlNumStr(std::string str);
 		bool isAlNumSpStr(std::string str);
 
