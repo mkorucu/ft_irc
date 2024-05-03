@@ -5,7 +5,6 @@ void	Server::pass(std::vector<std::string> &tokens)
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
 
-	std::cout << "call to PASS" << std::endl; 
 	if (tokens.size() == 2)
 	{
 		if (client_it->is_auth == true)
@@ -23,8 +22,6 @@ void	Server::nick(std::vector<std::string> &tokens)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
-
-	std::cout << "call to NICK" << std::endl;
 	
 	if (tokens.size() == 2)
 	{
@@ -48,7 +45,6 @@ void	Server::nick(std::vector<std::string> &tokens)
 			}
 			sendToClient(RPL_NICK(client_it->nickname, client_it->username, (*(tokens_it + 1))));
 			client_it->nickname = (*(tokens_it + 1));
-			std::cout << client_it->nickname << std::endl;
 		}
 	}
 	else
@@ -62,7 +58,6 @@ void	Server::user(std::vector<std::string> &tokens)
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
 
-	std::cout << "call to NICK" << std::endl;
 	prependColumn(tokens);
 	if (tokens.size() == 5 && (*(tokens_it + 4))[0] == ':' && (*(tokens_it + 4)).length() >= 2)
 	{
@@ -204,7 +199,6 @@ void	Server::kick(std::vector<std::string> &tokens)
 			sendReply(": use PASS-NICK-USER before sending any other commands");
 		else if (channel_it != myChannels.end())
 		{
-			std::cout << "channel " << channel_it->name << " | first index nick: " << channel_it->operator_array[0].nickname << std::endl;
 			if (findClientInChannel(channel_it, client_it->nickname) == channel_it->operator_array.end())
 				sendReply(": You are not in Channel.");
 			else if (findClientInChannel(channel_it, client_it->nickname) != channel_it->operator_array.begin())
@@ -260,45 +254,6 @@ void	Server::cap(std::vector<std::string> &tokens)
 	}
 	else if (tokens.size() >= 2 && (*(tokens_it + 1)) == "END")
 		;
-}
-
-void Server::whoCommand(std::vector<std::string> &tokens)
-{
-    std::vector<std::string>::iterator token_it = tokens.begin();
-    std::vector<client_t>::iterator client_it = findClient(newClientFd);
-
-
-
-    if(tokens.size() == 1)
-    {
-        for(std::vector<client_t>::iterator it = myClients.begin(); it != myClients.end(); it++)
-        {
-            if (client_it->nickname != it->nickname)
-                sendToClient("Nick: " + it->nickname);
-        }
-        sendToClient(": 315 " + tokens[1] + ": End of WHO list");
-    }
-    else if (tokens.size() == 2 && tokens[1][0] == '#')
-    {
-        std::vector<channel_t>::iterator channel_it = findChannel(*(token_it + 1));
-        if (channel_it == myChannels.end())
-                sendToClient (NO_SUCH_CHANNEL(client_it->nickname, "WHO"));
-        else if (findClientInChannel(channel_it, client_it->nickname) == channel_it->operator_array.end())  // ??? Gerekli mi
-            sendToClient (NOTONCHANNEL(client_it->nickname, tokens[1]));
-        else
-        {
-            for(std::vector<client_t>::iterator it = channel_it->operator_array.begin(); it != channel_it->operator_array.end(); it++)
-            {
-                if (client_it->nickname != it->nickname)
-                    sendToClient("Nick: " + it->nickname);
-            }
-            sendToClient(": 315 " + tokens[1] + ": End of WHO list");
-        }
-    }
-    else
-    {
-        sendToClient("Invalid Usage: WHO [<channel>] or WHO");
-    }
 }
 
 void Server::topicCommand(std::vector<std::string> &tokens)

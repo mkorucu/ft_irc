@@ -29,7 +29,6 @@ typedef enum irc_error_t{
 
 }irc_error_t;
 
-std::string err_to_name(int err);
 
 
 #define IRC_ERROR_CHECK(x) if(x) std::cerr << err_to_name(x) << std::endl;
@@ -81,7 +80,6 @@ class Server
         void noticeCommand(std::vector<std::string> &tokens);
         void topicCommand(std::vector<std::string> &tokens);
         void partCommand(std::vector<std::string> &tokens);
-        void whoCommand(std::vector<std::string> &tokens);
 
         class InvalidArgument : public std::exception{
             public:

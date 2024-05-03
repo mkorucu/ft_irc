@@ -30,13 +30,15 @@ Server::Server(std::string port_num, std::string pass)
 
 int Server::init()
 {
-    IRC_ERROR_CHECK(createSocket());
-    IRC_ERROR_CHECK(setSocketOpt());
-    IRC_ERROR_CHECK(setNonBlock());
-    IRC_ERROR_CHECK(bindSocket());
-    IRC_ERROR_CHECK(listenSocket());
+	int ret = IRC_FAIL;
+    if(createSocket() == IRC_OK)
+    	if(setSocketOpt() == IRC_OK)
+    		if(setNonBlock() == IRC_OK)
+    			if(bindSocket() == IRC_OK)
+    				if(listenSocket() == IRC_OK)
+						ret = IRC_OK;
 
-    return 0;
+    return ret;
 }
 
 void Server::start()
@@ -182,8 +184,6 @@ void Server::parseClient()
 			partCommand(tokens);
 		else if (*tokens_it == "TOPIC")
 			topicCommand(tokens);
-		//else if (*tokens_it == "WHO")
-		//	whoCommand(tokens);
 		else
 			;
 		lines_it++;
@@ -347,7 +347,6 @@ void Server::sendReply(std::string str)
 {
 	std::string reply = ":" + this->hostname + str + "\r\n";
 	send(newClientFd, reply.c_str(), reply.size(), 0);
-	std::cout << ">>>" << str << std::endl;
 }
 
 std::string err_to_name(int err)

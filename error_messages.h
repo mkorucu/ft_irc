@@ -18,9 +18,6 @@
 #define KICK(nick, user, channel, kicked) (":" + nick + "!" + user + "@* KICK " + channel + " " + kicked)
 #define NOTICE(nick, user, noticed, msg) (":" + nick + "!" + user + "@* NOTICE " + noticed + " " + msg)
 
-
-
-//soner
 #define ERR_USERNOTINCHANNEL(nickname, username) (" 482 " + client + " " + nickname + " :You're not channel operator")
 #define ERR_CHANOPRIVSNEEDED(notyournick, username) (" 441 " + client + " " + nickname + " :They aren't on that channel")
 #define NOTONCHANNEL(client, channel) (" 442 " + client + " " + channel + " :You're not on that channel")
