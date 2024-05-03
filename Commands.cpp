@@ -121,7 +121,7 @@ void	Server::privmsg(std::vector<std::string> &tokens)
 		}
 		else
 		{
-			sendToClient(findClient(*(tokens_it + 1))->socketFd, client_it->nickname + ": " + (*(tokens_it + 2)));
+			sendToClient(findClient(*(tokens_it + 1))->socketFd, RPL_PRIVUS(client_it->nickname, client_it->username, (*(tokens_it + 1)), (*(tokens_it + 2))));
 		}
 	}
 	else
@@ -308,7 +308,7 @@ void Server::topicCommand(std::vector<std::string> &tokens)
     std::vector<channel_t>::iterator channel_it = findChannel(*(token_it + 1));
 
     if (tokens[2][0] != ':' || tokens[1][0] != '#')
-        sendToClient ("Invalid Usage. TOPIC <channel> :[<topic>]");
+        sendToClient ("use TOPIC <channel> :[<topic>]");
     else if (client_it->is_registered == false)
         sendReply(": use PASS-NICK-USER before sending any other commands");
     else
@@ -369,12 +369,10 @@ void Server::noticeCommand(std::vector<std::string> &tokens)
 {
     std::vector<std::string>::iterator token_it = tokens.begin();
     std::vector<client_t>::iterator client_it = findClient(newClientFd);
-    std::string ret;
 
     prependColumn(tokens);
-    if (tokens.size() == 3 && (*(token_it + 2))[0] == ':' && (*(token_it + 2)).length() >= 2)
+    if (tokens.size() >= 3 && (*(token_it + 2))[0] == ':' && (*(token_it + 2)).length() >= 2 && (*(token_it + 1))[0] != '#')
     {
-        *(token_it + 2) = (*(token_it + 2)).substr(1, (*(token_it + 2)).size() - 1);
         if (client_it->is_registered == false)
         {
             sendReply(": use PASS-NICK-USER before sending any other commands");
@@ -385,13 +383,11 @@ void Server::noticeCommand(std::vector<std::string> &tokens)
         }
         else
         {
-            sendToClient(findClient(*(token_it + 1))->socketFd, ":" + client_it->nickname + "!" + client_it->username + "@localhost NOTICE " + token_it[1] + " :" + (*(token_it + 2)));
-            
+            sendToClient(findClient(*(token_it + 1))->socketFd, NOTICE(client_it->nickname, client_it->username, *(token_it +1 ), *(token_it + 2)));
         }
     }
     else
     {
-        ret = ("Incorrect format.");
-        ret.append(" NOTICE <msgtarget> :<message>");
+		sendReply(" use NOTICE <user> :[<message>]");
     }
 }

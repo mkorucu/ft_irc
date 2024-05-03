@@ -176,8 +176,8 @@ void Server::parseClient()
 			quit(tokens);
 		else if (*tokens_it == "CAP")
 			cap(tokens);
-		//else if (*tokens_it == "NOTICE")
-		//	noticeCommand(tokens);
+		else if (*tokens_it == "NOTICE")
+			noticeCommand(tokens);
 		else if (*tokens_it == "PART")
 			partCommand(tokens);
 		else if (*tokens_it == "TOPIC")

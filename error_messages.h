@@ -10,11 +10,13 @@
 #define RPL_TOPIC(nick, channel, topic) (" 332 " + nick + " " + channel + " " + topic)
 #define RPL_JOIN(nick, user, channel) (":" + nick + "!" + user + "@*" + " JOIN " + channel)
 #define RPL_PRIV(nick, user, channel, msg) (":" + nick + "!" + user + "@*" + " PRIVMSG " + channel + " :" + msg)
+#define RPL_PRIVUS(nick, user, receiver, msg) (":" + nick + "!" + user + "@*" + " PRIVMSG " + receiver + " :" + msg)
 #define RPL_MODE(nick, user, channel) (":" + nick + "!" + user + "@*" + " MODE " + channel + " +o " + nick)
 #define RPL_USRS(nick, channel, users) (" 353 " + nick + " = " + channel + " :@" + users)
 #define RPL_EONL(nick, channel) (" 366 " + nick + " " + channel + " :End of /NAMES list")
 #define RPL_NICK(nick, user, new_nick) (":" + nick + "!" + user + "@* NICK " + new_nick)
-#define KICK(nick, user, channel, kicked) (":" + nick + "!" + "@* KICK " + channel + " " + kicked)
+#define KICK(nick, user, channel, kicked) (":" + nick + "!" + user + "@* KICK " + channel + " " + kicked)
+#define NOTICE(nick, user, noticed, msg) (":" + nick + "!" + user + "@* NOTICE " + noticed + " " + msg)
 
 
 
