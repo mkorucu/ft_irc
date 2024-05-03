@@ -9,9 +9,11 @@
 #define RPL_NOTOPIC(nick, channel) (" 331 " + nick + " " + channel + " :No topic is set")
 #define RPL_TOPIC(nick, channel, topic) (" 332" + nick + " " + channel + " :" + topic)
 #define RPL_JOIN(nick, user, channel) (":" + nick + "!" + user + "@*" + " JOIN " + channel)
+#define RPL_PRIV(nick, user, channel, msg) (":" + nick + "!" + user + "@*" + " PRIVMSG " + channel + " :" + msg)
 #define RPL_MODE(nick, user, channel) (":" + nick + "!" + user + "@*" + " JOIN " + channel + " +o " + nick)
 #define RPL_USRS(nick, channel, users) (" 353 " + nick + " = " + channel + " :@" + users)
 #define RPL_EONL(nick, channel) (" 366 " + nick + " " + channel + " :End of /NAMES list")
+
 
 
 //soner

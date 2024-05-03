@@ -254,7 +254,7 @@ int Server::acceptSocket()
     return IRC_OK;
 }
 
-std::vector<client_t>::iterator Server::findClient(std::string str)
+std::vector<client_t>::iterator Server::findClient(std::string &str)
 {
 	for(std::vector<client_t>::iterator it = myClients.begin(); it != myClients.end(); it++)
 	{
@@ -264,7 +264,7 @@ std::vector<client_t>::iterator Server::findClient(std::string str)
 	return myClients.end();
 }
 
-std::vector<client_t>::iterator Server::findClientInChannel(std::vector<channel_t>::iterator channel, std::string str)
+std::vector<client_t>::iterator Server::findClientInChannel(std::vector<channel_t>::iterator channel, std::string &str)
 {
 	std::vector<client_t>::iterator it = channel->operator_array.begin();
 	std::vector<client_t>::iterator end = channel->operator_array.end();
@@ -277,7 +277,7 @@ std::vector<client_t>::iterator Server::findClientInChannel(std::vector<channel_
 	return it;
 }
 
-std::vector<channel_t>::iterator Server::findChannel(std::string name)
+std::vector<channel_t>::iterator Server::findChannel(std::string &name)
 {
 	for(std::vector<channel_t>::iterator it = myChannels.begin(); it != myChannels.end(); it++)
 	{
@@ -326,7 +326,8 @@ void Server::sendToClientsInChannel(std::vector<channel_t>::iterator channel_it,
 {
 	for(std::vector<client_t>::iterator clients_it = channel_it->operator_array.begin(); clients_it != channel_it->operator_array.end(); clients_it++)
 	{
-		send(clients_it->socketFd, (str + "\n").c_str(), str.size() + 1, 0);
+		if (clients_it->socketFd != newClientFd)
+			send(clients_it->socketFd, (str + "\n").c_str(), str.size() + 1, 0);
 	}
 }
 

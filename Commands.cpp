@@ -1,6 +1,6 @@
 #include "Server.h"
 
-void	Server::pass(std::vector<std::string> tokens)
+void	Server::pass(std::vector<std::string> &tokens)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -19,7 +19,7 @@ void	Server::pass(std::vector<std::string> tokens)
 		sendReply(": use PASS :password");
 }
 
-void	Server::nick(std::vector<std::string> tokens)
+void	Server::nick(std::vector<std::string> &tokens)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -57,7 +57,7 @@ void	Server::nick(std::vector<std::string> tokens)
 	}
 }
 
-void	Server::user(std::vector<std::string> tokens)
+void	Server::user(std::vector<std::string> &tokens)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -88,7 +88,7 @@ void	Server::user(std::vector<std::string> tokens)
 	}
 }
 
-void	Server::privmsg(std::vector<std::string> tokens)
+void	Server::privmsg(std::vector<std::string> &tokens)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -112,11 +112,7 @@ void	Server::privmsg(std::vector<std::string> tokens)
 			}
 			else
 			{
-				std::string sender = client_it->nickname;
-				for(client_it = channel_it->operator_array.begin(); client_it != channel_it->operator_array.end(); client_it++)
-				{
-					sendToClient(client_it->socketFd, sender + channel_it->name + " :" + (*(tokens_it + 2)));
-				}
+				sendToClientsInChannel(channel_it, RPL_PRIV(client_it->nickname, client_it->username, channel_it->name, (*(tokens_it + 2))));
 			}
 		}
 		else if (findClient(*(tokens_it + 1)) == myClients.end() || findClient(*(tokens_it + 1))->is_registered == false)
@@ -135,7 +131,7 @@ void	Server::privmsg(std::vector<std::string> tokens)
 
 }
 
-void	Server::join(std::vector<std::string> tokens)
+void	Server::join(std::vector<std::string> &tokens)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -191,7 +187,7 @@ void	Server::join(std::vector<std::string> tokens)
 	}
 }
 
-void	Server::kick(std::vector<std::string> tokens)
+void	Server::kick(std::vector<std::string> &tokens)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -230,7 +226,7 @@ void	Server::kick(std::vector<std::string> tokens)
 	}
 }
 
-void	Server::quit(std::vector<std::string> tokens)
+void	Server::quit(std::vector<std::string> &tokens)
 {
 	if (tokens.size() == 1)
 	{
@@ -245,7 +241,7 @@ void	Server::quit(std::vector<std::string> tokens)
 	}
 }
 
-void	Server::cap(std::vector<std::string> tokens)
+void	Server::cap(std::vector<std::string> &tokens)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 
@@ -261,7 +257,7 @@ void	Server::cap(std::vector<std::string> tokens)
 		;
 }
 
-void Server::whoCommand(std::vector<std::string> tokens)
+void Server::whoCommand(std::vector<std::string> &tokens)
 {
     std::vector<std::string>::iterator token_it = tokens.begin();
     std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -300,7 +296,7 @@ void Server::whoCommand(std::vector<std::string> tokens)
     }
 }
 
-void Server::topicCommand(std::vector<std::string> tokens)
+void Server::topicCommand(std::vector<std::string> &tokens)
 {
     std::vector<std::string>::iterator token_it = tokens.begin();
     std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -325,7 +321,7 @@ void Server::topicCommand(std::vector<std::string> tokens)
     }
 }
 
-void Server::partCommand(std::vector<std::string> tokens)
+void Server::partCommand(std::vector<std::string> &tokens)
 {
     std::vector<std::string>::iterator token_it = tokens.begin();
     std::vector<client_t>::iterator client_it = findClient(newClientFd);
@@ -355,7 +351,7 @@ void Server::partCommand(std::vector<std::string> tokens)
     }
 }
 
-void Server::noticeCommand(std::vector<std::string> tokens)
+void Server::noticeCommand(std::vector<std::string> &tokens)
 {
     std::vector<std::string>::iterator token_it = tokens.begin();
     std::vector<client_t>::iterator client_it = findClient(newClientFd);
