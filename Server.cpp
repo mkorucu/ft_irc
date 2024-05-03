@@ -70,9 +70,10 @@ void Server::start()
                     }
                     else
                     {
-                        client_t client = {};
-						client.socketFd = newClientFd;
-                        myClients.push_back(client);
+                        client_t *client = new client_t;
+						client->socketFd = newClientFd;
+                        myClients.push_back(*client);
+						delete client;
                         FD_SET(newClientFd, &current_sockets);
                         if(newClientFd > max_socket){
                             max_socket = newClientFd;
@@ -167,7 +168,8 @@ void Server::parseClient()
 			quit(tokens);
 		else if (*tokens_it == "CAP")
 			cap(tokens);
-		perror("bişey");
+		else
+			;
 		lines_it++;
 	}
 }
@@ -314,7 +316,7 @@ void Server::sendToClient(int fd, std::string str)
 
 void Server::sendReply(std::string str)
 {
-	std::string reply =  std::to_string(newClientFd) + ":" + this->hostname + " " + str + "\n";
+	std::string reply = ":" + this->hostname + str + "\n";
 	send(newClientFd, reply.c_str(), reply.size(), 0);
 	std::cout << ">>>" << str << std::endl;
 }

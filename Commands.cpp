@@ -67,10 +67,6 @@ void	Server::user(std::vector<std::string> tokens)
 	if (tokens.size() == 5 && (*(tokens_it + 4))[0] == ':' && (*(tokens_it + 4)).length() >= 2)
 	{
 		*(tokens_it + 4) = (*(tokens_it + 4)).substr(1, sizeof(*(tokens_it + 4)) - 1);
-		//if (isAlNumStr(*(tokens_it + 1)) == false || isAlNumSpStr(*(tokens_it + 4)) == false)
-		//{
-		//	sendReply(": usernames and realnames may only include alphanumerical characters.");
-		//}
 		if (client_it->username.empty() == false || client_it->real_name.empty() == false)
 		{
 			sendReply(": you are already registered!");
@@ -81,7 +77,9 @@ void	Server::user(std::vector<std::string> tokens)
 			client_it->real_name = (*(tokens_it + 4));
 			client_it->is_registered = true;
 
-			sendReply(RPL_WELCOME(std::to_string(newClientFd), client_it->nickname, client_it->username, this->hostname));
+			sendReply(RPL_WELCOME(client_it->nickname, client_it->username, this->hostname));
+			sendReply(RPL_YOURHOST(client_it->nickname, this->hostname));
+			sendReply(RPL_CREATED(client_it->nickname, this->c_date));
 		}
 	}
 	else
@@ -98,7 +96,7 @@ void	Server::privmsg(std::vector<std::string> tokens)
 	prependColumn(tokens);
 	if (tokens.size() == 3 && (*(tokens_it + 2))[0] == ':' && (*(tokens_it + 2)).length() >= 2)
 	{
-		*(tokens_it + 2) = (*(tokens_it + 2)).substr(1, sizeof(*(tokens_it + 2)) - 1);
+		*(tokens_it + 2) = (*(tokens_it + 2)).substr(1, (*(tokens_it + 2)).length() - 1);
 		if (client_it->is_registered == false || client_it->is_auth == false || client_it->nickname.length() == 0)
 			sendToClient(": use PASS-NICK-USER before sending any other commands");
 		else if ((*(tokens_it + 1))[0] == '#')
@@ -155,9 +153,28 @@ void	Server::join(std::vector<std::string> tokens)
 			else
 			{
 				if (channel_it->topic.length() == 0)
-					sendReply(RPL_NOTOPIC(client_it->nickname, channel_it->name));
+				{
+					sendToClient(RPL_JOIN(client_it->nickname, client_it->username, *(tokens_it + 1))); //send to everyone
+					sendReply(RPL_NOTOPIC(client_it->nickname, *(tokens_it + 1)));
+					if (channel_it->operator_array.size() > 0)
+					{
+						std::vector<client_t>::iterator it = channel_it->operator_array.begin();
+						std::string users = it->nickname;
+						it++;
+						while (it != channel_it->operator_array.end())
+						{
+							users += (" " + it->nickname);
+							it++;
+						}
+						sendReply(RPL_USRS(client_it->nickname, *(tokens_it + 1), users));
+					}
+					sendReply(RPL_EONL(client_it->nickname, *(tokens_it + 1)));
+				}
 				else
-					sendReply(RPL_TOPIC(client_it->nickname, channel_it->name, channel_it->topic));
+				{
+					sendToClient(RPL_JOIN(client_it->nickname, client_it->username, *(tokens_it + 1))); //send to everyone
+					sendReply(RPL_TOPIC(client_it->nickname, *(tokens_it + 1), channel_it->topic));
+				}
 				channel_it->operator_array.push_back(*client_it);
 			}
 		}
@@ -167,6 +184,8 @@ void	Server::join(std::vector<std::string> tokens)
 			chan->name = *(tokens_it + 1);
 			chan->operator_array.push_back(*client_it);
 			myChannels.push_back(*chan);
+			sendToClient(RPL_JOIN(client_it->nickname, client_it->username, *(tokens_it + 1)));
+			sendToClient(RPL_MODE(client_it->nickname, client_it->username, *(tokens_it + 1)));
 			sendReply(RPL_NOTOPIC(client_it->nickname, *(tokens_it + 1)));
 			delete chan;
 		}
