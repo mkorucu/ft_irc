@@ -30,7 +30,7 @@ void	Server::nick(std::vector<std::string> &tokens)
 	{
 		if (!isAlNumStr(*(tokens_it + 1)))
 		{
-			sendReply(": Nicknames may only include alphanumerical characters.");
+			sendReply(ERR_NICK(*(tokens_it + 1)));
 		}
 		else if (findClient(*(tokens_it + 1)) != myClients.end())
 		{
@@ -38,15 +38,16 @@ void	Server::nick(std::vector<std::string> &tokens)
 		}
 		else
 		{
-			client_it->nickname = (*(tokens_it + 1));
 			for(std::vector<channel_t>::iterator it = myChannels.begin(); it != myChannels.end(); it++)
 			{
-				client_it = findClientInChannel(it, client_it->nickname);
-				if (client_it != it->operator_array.end())
+				std::vector<client_t>::iterator ch_client_it = findClientInChannel(it, client_it->nickname);
+				if (ch_client_it != it->operator_array.end())
 				{
-					client_it->nickname = (*(tokens_it + 1));
+					ch_client_it->nickname = (*(tokens_it + 1));
 				}
 			}
+			sendToClient(RPL_NICK(client_it->nickname, client_it->username, (*(tokens_it + 1))));
+			client_it->nickname = (*(tokens_it + 1));
 			std::cout << client_it->nickname << std::endl;
 		}
 	}
@@ -135,6 +136,7 @@ void	Server::join(std::vector<std::string> &tokens)
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<client_t>::iterator client_it = findClient(newClientFd);
 
+
 	if (tokens.size() == 2 && (*(tokens_it + 1))[0] == '#' && (*(tokens_it + 1)).length() >= 2)
 	{
 		std::vector<channel_t>::iterator channel_it = findChannel(*(tokens_it + 1));
@@ -147,7 +149,9 @@ void	Server::join(std::vector<std::string> &tokens)
 				;
 			else
 			{
+				channel_it->operator_array.push_back(*client_it);
 				sendToClientsInChannel(channel_it, RPL_JOIN(client_it->nickname, client_it->username, *(tokens_it + 1)));
+				sendToClient(RPL_JOIN(client_it->nickname, client_it->username, *(tokens_it + 1)));
 				if (channel_it->topic.length() == 0)
 					sendReply(RPL_NOTOPIC(client_it->nickname, *(tokens_it + 1)));
 				else
@@ -163,9 +167,10 @@ void	Server::join(std::vector<std::string> &tokens)
 						it++;
 					}
 					sendReply(RPL_USRS(client_it->nickname, *(tokens_it + 1), users));
+					sendReply(RPL_EONL(client_it->nickname, *(tokens_it + 1)));
 				}
-				sendReply(RPL_EONL(client_it->nickname, *(tokens_it + 1)));
-				channel_it->operator_array.push_back(*client_it);
+				else
+					sendToClient(RPL_MODE(client_it->nickname, client_it->username, *(tokens_it + 1)));
 			}
 		}
 		else 
@@ -276,7 +281,7 @@ void Server::whoCommand(std::vector<std::string> &tokens)
     {
         std::vector<channel_t>::iterator channel_it = findChannel(*(token_it + 1));
         if (channel_it == myChannels.end())
-                sendToClient (NO_SUCH_CHANNEL(client_it->nickname, tokens[1]));
+                sendToClient (NO_SUCH_CHANNEL(client_it->nickname, "WHO"));
         else if (findClientInChannel(channel_it, client_it->nickname) == channel_it->operator_array.end())  // ??? Gerekli mi
             sendToClient (NOTONCHANNEL(client_it->nickname, tokens[1]));
         else
@@ -304,18 +309,19 @@ void Server::topicCommand(std::vector<std::string> &tokens)
     if (tokens[2][0] != ':' || tokens[1][0] != '#')
         sendToClient ("Invalid Usage. TOPIC <channel> :[<topic>]");
     else if (client_it->is_registered == false)
-        sendToClient ("AuthError.");
+        sendReply(": use PASS-NICK-USER before sending any other commands");
     else
     {       
             prependColumn(tokens);
             if (channel_it == myChannels.end())
-                sendToClient (NO_SUCH_CHANNEL(client_it->nickname, tokens[1]));
+                sendToClient (NO_SUCH_CHANNEL(client_it->nickname, "TOPIC"));
             else if (findClientInChannel(channel_it, client_it->nickname) == channel_it->operator_array.end())
                 sendToClient (NOTONCHANNEL(client_it->nickname, tokens[1]));
             else
             {
                 channel_it->topic = tokens[2];
                 sendToClientsInChannel(channel_it , TOPICCHANGED(client_it->nickname, client_it->username, tokens[1], tokens[2]));
+				sendToClient(TOPICCHANGED(client_it->nickname, client_it->username, tokens[1], tokens[2]));
             }
     }
 }
@@ -328,24 +334,31 @@ void Server::partCommand(std::vector<std::string> &tokens)
 
 
     if (tokens[1][0] != '#' || tokens[1].size() < 2 || !((tokens.size() >= 3 && tokens[2][0] == ':') || tokens.size() == 2))
-        sendToClient ("Invalid Usage. PART <channel>");
+        sendToClient (": use PART <channel>");
     else if (client_it->is_registered == false)
-        sendToClient ("AuthError.");
+        sendReply(": use PASS-NICK-USER before sending any other commands");
     else
     {       
             if (tokens.size() >= 3)
                 prependColumn(tokens);
             if (channel_it == myChannels.end())
-                sendToClient (NO_SUCH_CHANNEL(client_it->nickname, tokens[1]));
+                sendReply (NO_SUCH_CHANNEL(client_it->nickname, "PART"));
             else if (findClientInChannel(channel_it, client_it->nickname) == channel_it->operator_array.end())
-                sendToClient (NOTONCHANNEL(client_it->nickname, tokens[1]));
+                sendReply (NOTONCHANNEL(client_it->nickname, tokens[1]));
             else
             {
-                if (tokens.size() >= 3)
-                    sendToClientsInChannel(channel_it, PARTWITHREASON(client_it->nickname, client_it->username, tokens[0], tokens[1], tokens[2]));
-                else    
-                    sendToClientsInChannel(channel_it , PART(client_it->nickname, client_it->username, tokens[0], tokens[1]));
                 channel_it->operator_array.erase(findClientInChannel(channel_it, client_it->nickname));
+                if (tokens.size() >= 3)
+				{
+                    sendToClientsInChannel(channel_it, PARTWITHREASON(client_it->nickname, client_it->username, tokens[1], tokens[2]));
+					sendToClient(PARTWITHREASON(client_it->nickname, client_it->username, tokens[1], tokens[2]));
+				}
+                else
+				{
+                    sendToClientsInChannel(channel_it , PART(client_it->nickname, client_it->username, tokens[1]));
+					sendToClient(PART(client_it->nickname, client_it->username, tokens[1]));
+				}
+				
             }
     }
 }
@@ -362,15 +375,15 @@ void Server::noticeCommand(std::vector<std::string> &tokens)
         *(token_it + 2) = (*(token_it + 2)).substr(1, (*(token_it + 2)).size() - 1);
         if (client_it->is_registered == false)
         {
-            sendToClient("Authentication error.");
+            sendReply(": use PASS-NICK-USER before sending any other commands");
         }
         else if (findClient(*(token_it + 1)) == myClients.end() || findClient(*(token_it + 1))->is_registered == false)
         {
-            sendToClient(NO_NICKNAME(client_it->nickname, *(token_it + 1)));
+            sendReply(NO_NICKNAME(client_it->nickname, *(token_it + 1)));
         }
         else
         {
-            sendToClient(findClient(*(token_it + 1))->socketFd, client_it->nickname + "!" + client_it->username + "@localhost NOTICE " + token_it[1] + ": " + (*(token_it + 2)));
+            sendToClient(findClient(*(token_it + 1))->socketFd, ":" + client_it->nickname + "!" + client_it->username + "@localhost NOTICE " + token_it[1] + " :" + (*(token_it + 2)));
             
         }
     }
