@@ -83,6 +83,13 @@ class Server
         void partCommand(std::vector<std::string> &tokens);
         void whoCommand(std::vector<std::string> &tokens);
 
+        class InvalidArgument : public std::exception{
+            public:
+                const char *what() const throw(){
+                    return "InvalidArgument.";
+                }
+        };
+
 		bool isAlNumStr(std::string str);
 		bool isAlNumSpStr(std::string str);
 

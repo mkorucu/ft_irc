@@ -2,24 +2,28 @@
 
 Server::Server(std::string port_num, std::string pass)
 {
-    if (pass.length() <= 0)
-    {
-        std::cerr << "Password cannot be empty.\n";
-        throw;
-    }
-    password = pass;
-    try
-    {
-        port = std::stoi(port_num);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-        std::cerr << "Portnum is not integer.\n";
-    }
-    if (port >= (1 << 16) || port < 0)
+	if (pass.length() <= 0 || port_num.length() <= 0)
+	{
+		std::cerr << "One or more argument is empty!\n";
+		throw InvalidArgument();
+	}
+	else if (pass.find_first_of(" \r\n") != std::string::npos || port_num.find_first_of(" \r\n") != std::string::npos)
+	{
+		std::cerr << "Input arguments should be in one piece!\n";
+		throw InvalidArgument();
+	}
+	password = pass;
+	for(size_t i = 0; i < port_num.length(); i++)
+	{
+		if (std::isdigit(port_num[i]) == false)
+			throw InvalidArgument();
+	}
+	port = std::stoi(port_num);
+
+    if (port >= (1 << 16) || port < 1000)
     {
         std::cerr << "Portnum is not between 2^16 ~ 0.\n";
+		throw InvalidArgument();
     }
     std::cout << "Server object created.\n";
 }
