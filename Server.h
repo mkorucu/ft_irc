@@ -77,6 +77,11 @@ class Server
 		void	quit(std::vector<std::string> tokens);
 		void	cap(std::vector<std::string> tokens);
 	
+        void noticeCommand(std::vector<std::string> tokens);
+        void topicCommand(std::vector<std::string> tokens);
+        void partCommand(std::vector<std::string> tokens);
+        void whoCommand(std::vector<std::string> tokens);
+
 		bool isAlNumStr(std::string str);
 		bool isAlNumSpStr(std::string str);
 
@@ -84,6 +89,7 @@ class Server
 
 		void sendToClient(std::string str);
 		void sendToClient(int fd, std::string str);
+		void sendToClientsInChannel(std::vector<channel_t>::iterator channel_it, std::string str);
 		void sendReply(std::string str);
 		std::vector<client_t>::iterator findClient(int fd);
 		std::vector<client_t>::iterator findClient(std::string str);

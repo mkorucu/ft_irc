@@ -168,6 +168,14 @@ void Server::parseClient()
 			quit(tokens);
 		else if (*tokens_it == "CAP")
 			cap(tokens);
+		else if (*tokens_it == "NOTICE")
+			noticeCommand(tokens);
+		else if (*tokens_it == "PART")
+			partCommand(tokens);
+		else if (*tokens_it == "TOPIC")
+			topicCommand(tokens);
+		else if (*tokens_it == "WHO")
+			whoCommand(tokens);
 		else
 			;
 		lines_it++;
@@ -314,9 +322,17 @@ void Server::sendToClient(int fd, std::string str)
 	send(fd, (str + "\r\n").c_str(), str.size() + 2, 0);
 }
 
+void Server::sendToClientsInChannel(std::vector<channel_t>::iterator channel_it, std::string str)
+{
+	for(std::vector<client_t>::iterator clients_it = channel_it->operator_array.begin(); clients_it != channel_it->operator_array.end(); clients_it++)
+	{
+		send(clients_it->socketFd, (str + "\n").c_str(), str.size() + 1, 0);
+	}
+}
+
 void Server::sendReply(std::string str)
 {
-	std::string reply = ":" + this->hostname + str + "\n";
+	std::string reply = ":" + this->hostname + str + "\r\n";
 	send(newClientFd, reply.c_str(), reply.size(), 0);
 	std::cout << ">>>" << str << std::endl;
 }
