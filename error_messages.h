@@ -7,7 +7,7 @@
 #define RPL_CREATED(nick, date) (" 003 " + nick + " :This server was created " + date)
 
 #define RPL_NOTOPIC(nick, channel) (" 331 " + nick + " " + channel + " :No topic is set")
-#define RPL_TOPIC(nick, channel, topic) (" 332" + nick + " " + channel + " :" + topic)
+#define RPL_TOPIC(nick, channel, topic) (" 332 " + nick + " " + channel + " " + topic)
 #define RPL_JOIN(nick, user, channel) (":" + nick + "!" + user + "@*" + " JOIN " + channel)
 #define RPL_PRIV(nick, user, channel, msg) (":" + nick + "!" + user + "@*" + " PRIVMSG " + channel + " :" + msg)
 #define RPL_MODE(nick, user, channel) (":" + nick + "!" + user + "@*" + " MODE " + channel + " +o " + nick)
@@ -28,7 +28,7 @@
 #define NICKNAME_IN_USE(nickname) (" 433 " + nickname + " :Nickname is already in use. Please provide your password with 'USERPASS: <password> if you have this nickname already!'")
 #define ERR_ALREADYREGISTERED(nickname) (" 462 " + nickname + " :Already registered."  )
 
-#define TOPICCHANGED(nickname, username, channelname, topic) (nickname + "!" + username +"@* TOPIC "+ channelname , " :" + topic)
+#define TOPICCHANGED(nickname, username, channelname, topic) (":" + nickname + "!" + username + "@* TOPIC " + channelname + " " + topic)
 #define PART(nickname, username, channelname) (":"+ nickname + "!" + username +"@* PART " + channelname)
 #define PARTWITHREASON(nickname, username, channelname, reason) (":"+ nickname + "!" + username + "@* PART " + channelname + " " + reason)
 

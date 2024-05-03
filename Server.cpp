@@ -304,7 +304,11 @@ void Server::deleteClientOnEverywhere(int client_fd)
 		{
 			std::vector<client_t>::iterator client = findClientInChannel(it, client_it->nickname);
 			if (client != it->operator_array.end())
+			{
+				sendToClientsInChannel(it, PART(client_it->nickname, client_it->username, it->name));
+				sendToClient(PART(client_it->nickname, client_it->username, it->name));
 				it->operator_array.erase(client);
+			}
 		}
 		myClients.erase(client_it);
 	}

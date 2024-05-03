@@ -314,14 +314,15 @@ void Server::topicCommand(std::vector<std::string> &tokens)
     {       
             prependColumn(tokens);
             if (channel_it == myChannels.end())
-                sendToClient (NO_SUCH_CHANNEL(client_it->nickname, "TOPIC"));
+                sendReply (NO_SUCH_CHANNEL(client_it->nickname, "TOPIC"));
             else if (findClientInChannel(channel_it, client_it->nickname) == channel_it->operator_array.end())
-                sendToClient (NOTONCHANNEL(client_it->nickname, tokens[1]));
+                sendReply (NOTONCHANNEL(client_it->nickname, tokens[1]));
             else
             {
                 channel_it->topic = tokens[2];
-                sendToClientsInChannel(channel_it , TOPICCHANGED(client_it->nickname, client_it->username, tokens[1], tokens[2]));
-				sendToClient(TOPICCHANGED(client_it->nickname, client_it->username, tokens[1], tokens[2]));
+                sendToClientsInChannel(channel_it, TOPICCHANGED(client_it->nickname, client_it->username, tokens[1], tokens[2]));
+				sendToClient(TOPICCHANGED(client_it->nickname, client_it->username, channel_it->name, channel_it->topic));
+				sendReply(RPL_TOPIC(client_it->nickname, channel_it->name, channel_it->topic));
             }
     }
 }
